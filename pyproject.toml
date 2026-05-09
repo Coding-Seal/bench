@@ -1,0 +1,13 @@
+[project]
+name = "bench"
+version = "0.1.0"
+description = "PostgreSQL configuration optimizer using Bayesian optimization"
+requires-python = ">=3.13"
+dependencies = [
+    "optuna>=3.4.0",
+    "optunahub",
+    "smac>=2.2.0",
+    "optuna-dashboard>=0.14.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+]

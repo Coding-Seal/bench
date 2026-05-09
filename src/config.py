@@ -23,7 +23,10 @@ RESTART_REQUIRED_PARAMS = {
     "max_parallel_maintenance_workers"
 }
 
-# 🗄️ Optuna Storage Configuration
+BENCH_DURATION = int(os.getenv("BENCH_DURATION", "30"))
+
+# Optuna storage
 STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", "pg_config_optimization")
 STORAGE_DB = PROJECT_ROOT / "optuna_study.db"
 STORAGE_URL = f"sqlite:///{STORAGE_DB.resolve()}"
+

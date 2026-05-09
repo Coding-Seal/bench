@@ -1,20 +1,27 @@
-import subprocess
-import time
+import logging
 import re
 import shutil
-from .config import CONFIG_PATH, BACKUP_PATH, PG_USER, PG_DB, PG_SERVICE, RESTART_REQUIRED_PARAMS
+import subprocess
+import time
+
+from .config import BACKUP_PATH, CONFIG_PATH, PG_DB, PG_SERVICE, PG_USER, RESTART_REQUIRED_PARAMS
+
+logger = logging.getLogger(__name__)
+
 
 def run_docker_cmd(cmd: list, check: bool = True) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, check=check)
 
-def backup_config():
+
+def backup_config() -> None:
     if CONFIG_PATH.exists():
-        # Use shutil.copy2 instead of rename to avoid cross-ownership permission errors
         shutil.copy2(CONFIG_PATH, BACKUP_PATH)
 
-def restore_config():
+
+def restore_config() -> None:
     if BACKUP_PATH.exists():
         shutil.copy2(BACKUP_PATH, CONFIG_PATH)
+
 
 def apply_config(params: dict) -> bool:
     lines = CONFIG_PATH.read_text().splitlines()
@@ -44,7 +51,8 @@ def apply_config(params: dict) -> bool:
     CONFIG_PATH.write_text("\n".join(new_lines) + "\n")
     return bool(set(params.keys()) & RESTART_REQUIRED_PARAMS)
 
-def wait_for_postgres(timeout: int = 60):
+
+def wait_for_postgres(timeout: int = 60) -> bool:
     cmd = ["docker", "compose", "exec", "-T", PG_SERVICE, "pg_isready", "-U", PG_USER]
     start = time.time()
     while time.time() - start < timeout:
@@ -54,12 +62,13 @@ def wait_for_postgres(timeout: int = 60):
         time.sleep(2)
     raise RuntimeError(f"PostgreSQL did not become ready within {timeout}s")
 
-def reload_or_restart(needs_restart: bool):
+
+def reload_or_restart(needs_restart: bool) -> None:
     if needs_restart:
-        print("🔄 Restarting PostgreSQL (restart-required params changed)...")
+        logger.info("Restarting PostgreSQL (restart-required params changed)")
         run_docker_cmd(["docker", "compose", "restart", PG_SERVICE])
     else:
-        print("🔄 Reloading PostgreSQL configuration...")
+        logger.info("Reloading PostgreSQL configuration")
         run_docker_cmd([
             "docker", "compose", "exec", "-T", PG_SERVICE,
             "psql", "-U", PG_USER, "-d", PG_DB,

@@ -1,12 +1,15 @@
 set dotenv-load := true
 
-# 📊 Benchmark configuration (optimized for stable peak throughput)
-BENCH_DURATION   := "300"   # 5 min → smooths out transient spikes
-BENCH_CLIENTS    := "20"    # Adjust to match your CPU core count
-BENCH_JOBS       := "20"    # MUST equal clients for 1:1 thread:connection mapping
-BENCH_SCALE      := "50"    # Larger dataset prevents trivial RAM-cache artifacts
+BENCH_DURATION := "30"   # 5 min — smooths transient spikes
+BENCH_CLIENTS  := "20"    # match pinned CPU core count
+BENCH_JOBS     := "20"    # 1:1 thread:connection mapping
+BENCH_SCALE    := "50"    # ~720 MB dataset, prevents trivial RAM-cache hits
 
-# 🛠️ Lifecycle
+TRIALS  := "20"
+SAMPLER := "smac"         # smac | tpe
+
+# ── Infrastructure ────────────────────────────────────────────────────────────
+
 up:
     docker compose up -d postgres postgres-exporter prometheus grafana
 
@@ -16,30 +19,51 @@ down:
 clean:
     docker compose down -v
 
-# 🗄️ Initialization
-bench-init:
-    @echo "📦 Initializing benchmark database (scale={{BENCH_SCALE}})..."
-    docker compose run --rm --no-deps pgbench pgbench -i -s {{BENCH_SCALE}} -U $POSTGRES_USER -d $POSTGRES_DB
-    docker compose run --rm --no-deps pgbench psql -U $POSTGRES_USER -d $POSTGRES_DB -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
-
-# ⏱️ Stable max-throughput benchmark (no rate cap, no manual warmup)
-bench-run duration=BENCH_DURATION clients=BENCH_CLIENTS jobs=BENCH_JOBS:
-    @echo "🚀 pgbench: {{duration}}s | {{clients}} clients | {{jobs}} threads (MAX THROUGHPUT)"
-    docker compose run --rm --no-deps pgbench pgbench \
-      -c {{clients}} -j {{jobs}} -T {{duration}} -M prepared \
-      -P 10 -r \
-      -U $POSTGRES_USER -d $POSTGRES_DB
-
-# 🔧 Config reload
-reload:
-    @echo "🔄 Reloading PostgreSQL configuration..."
-    docker compose exec postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c "SELECT pg_reload_conf();"
-
-restart:
-    docker compose restart postgres
-
 logs:
     docker compose logs -f
 
 status:
     docker compose ps
+
+# ── Database init ─────────────────────────────────────────────────────────────
+
+# Initialize pgbench schema and enable pg_stat_statements
+db-init:
+    docker compose run --rm --no-deps pgbench \
+      pgbench -i -s {{BENCH_SCALE}} -U $POSTGRES_USER -d $POSTGRES_DB
+    docker compose run --rm --no-deps pgbench \
+      psql -U $POSTGRES_USER -d $POSTGRES_DB \
+      -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
+
+# ── Manual benchmark ──────────────────────────────────────────────────────────
+
+# Run a one-shot pgbench (max throughput, no rate cap)
+bench duration=BENCH_DURATION clients=BENCH_CLIENTS jobs=BENCH_JOBS:
+    docker compose run --rm --no-deps pgbench pgbench \
+      -c {{clients}} -j {{jobs}} -T {{duration}} -M prepared \
+      -P 10 -r \
+      -U $POSTGRES_USER -d $POSTGRES_DB
+
+# ── Optimizer ─────────────────────────────────────────────────────────────────
+
+# Run the optimizer (default: SMAC, 20 trials, 300 s each)
+optimize trials=TRIALS sampler=SAMPLER duration=BENCH_DURATION:
+    uv run python main.py --trials {{trials}} --sampler {{sampler}} --duration {{duration}}
+
+# Open the Optuna dashboard (TPE runs)
+dashboard:
+    uv run optuna-dashboard sqlite:///optuna_study.db
+
+# ── PostgreSQL config ─────────────────────────────────────────────────────────
+
+reload:
+    docker compose exec postgres psql -U $POSTGRES_USER -d $POSTGRES_DB \
+      -c "SELECT pg_reload_conf();"
+
+restart:
+    docker compose restart postgres
+
+# ── Python env ────────────────────────────────────────────────────────────────
+
+sync:
+    uv sync
