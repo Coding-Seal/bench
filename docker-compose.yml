@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: pg_bench
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgresql/data/data:/var/lib/postgresql/data:Z
+      - ./postgresql/config:/etc/postgresql/conf:Z
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/conf/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+    # 🔒 CPU PINNING (replace with your isolated core IDs)
+    cpuset: "2,3,4,5"   # or "2-5"
+    
+    # Optional: Keep resource limits matching pinned cores
+    deploy:
+      resources:
+        limits:
+          cpus: '4'      # Must equal number of pinned cores
+          memory: 4G
+        reservations:
+          cpus: '4'
+          memory: 2G
+  pgbench:
+    image: postgres:17
+    container_name: pg_bench_runner
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      PGHOST: postgres
+      PGPORT: "5432"
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: pg_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+      # Enable collection of pg_stat_statements metrics
+      PG_EXPORTER_EXTEND_QUERY_PATH: /etc/postgres-exporter/queries.yaml
+    ports:
+      - "9187:9187"
+    volumes:
+      - ./postgresql/exporter/queries.yaml:/etc/postgres-exporter/queries.yaml:Z
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: pg_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:Z
+      - prometheus_data:/prometheus
+
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    depends_on:
+      postgres-exporter:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: pg_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:Z
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+volumes:  # ← Add this at the root level of compose file
+  prometheus_data:
+  grafana_data:

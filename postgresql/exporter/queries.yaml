@@ -1,0 +1,41 @@
+pg_stat_statements:
+  query: |
+    SELECT
+      userid,
+      dbid,
+      queryid,
+      calls,
+      total_exec_time,
+      mean_exec_time,
+      rows,
+      shared_blks_hit,
+      shared_blks_read
+    FROM pg_stat_statements
+  metrics:
+    - userid:
+        usage: "LABEL"
+        description: "User OID"
+    - dbid:
+        usage: "LABEL"
+        description: "Database OID"
+    - queryid:
+        usage: "LABEL"
+        description: "Query ID"
+    - calls:
+        usage: "COUNTER"
+        description: "Number of times executed"
+    - total_exec_time:
+        usage: "COUNTER"
+        description: "Total execution time in milliseconds"
+    - mean_exec_time:
+        usage: "GAUGE"
+        description: "Mean execution time in milliseconds"
+    - rows:
+        usage: "COUNTER"
+        description: "Total rows retrieved or affected"
+    - shared_blks_hit:
+        usage: "COUNTER"
+        description: "Shared buffer cache hits"
+    - shared_blks_read:
+        usage: "COUNTER"
+        description: "Shared blocks read from disk"
