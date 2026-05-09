@@ -10,23 +10,71 @@ from optuna.distributions import (
 # dynamic bounds, so both SMAC and TPE operate on the same fixed space.
 SEARCH_SPACE: dict[str, IntDistribution | FloatDistribution | CategoricalDistribution] = {
     "shared_buffers_mb":               IntDistribution(512,  2048, step=256),
-    "work_mem_kb":                     IntDistribution(2048, 8192, step=512),
-    "maintenance_work_mem_mb":         IntDistribution(128,   512, step=64),
-    "effective_cache_size_gb":         IntDistribution(2,       4),
+    "work_mem_kb":                     IntDistribution(2048, 12288, step=512),
+    "maintenance_work_mem_mb":         IntDistribution(128,    512, step=64),
+    "effective_cache_size_gb":         IntDistribution(2,        4),
     "huge_pages":                      CategoricalDistribution(["off", "try"]),
-    "wal_buffers_mb":                  IntDistribution(16,     64, step=16),
-    "checkpoint_timeout_min":          IntDistribution(5,      30, step=5),
-    "max_wal_size_gb":                 IntDistribution(4,      12, step=2),
-    "min_wal_size_gb":                 IntDistribution(1,       5),
+    "wal_buffers_mb":                  IntDistribution(16,      64, step=16),
+    "checkpoint_timeout_min":          IntDistribution(5,       30, step=5),
+    "max_wal_size_gb":                 IntDistribution(4,       16, step=2),
+    "min_wal_size_gb":                 IntDistribution(1,        5),
     "checkpoint_completion_target":    FloatDistribution(0.7,  0.95, step=0.05),
-    "random_page_cost":                FloatDistribution(1.0,  2.0,  step=0.1),
-    "effective_io_concurrency":        IntDistribution(100,   400, step=50),
-    "default_statistics_target":       IntDistribution(50,    200, step=25),
-    "max_connections":                 IntDistribution(100,   400, step=25),
+    "random_page_cost":                FloatDistribution(1.0,   4.0, step=0.1),
+    "effective_io_concurrency":        IntDistribution(100,    400, step=50),
+    "default_statistics_target":       IntDistribution(50,     500, step=25),
+    "max_connections":                 IntDistribution(25,     400, step=25),
     "max_worker_processes":            IntDistribution(2,       8),
     "max_parallel_workers":            IntDistribution(2,       8),
     "max_parallel_workers_per_gather": IntDistribution(0,       8),
     "max_parallel_maintenance_workers":IntDistribution(1,       8),
+}
+
+
+# pgTune baselines: PostgreSQL 17, 4 GB RAM, 4 CPUs, SSD.
+# Values are in search-space units (raw, before config_to_pg).
+_Baseline = dict[str, int | float | str]
+
+PGTUNE_BASELINES: dict[str, _Baseline] = {
+    "oltp": {
+        "shared_buffers_mb":                1024,
+        "work_mem_kb":                      4096,  # 4 MB
+        "maintenance_work_mem_mb":           256,
+        "effective_cache_size_gb":             3,
+        "huge_pages":                       "off",
+        "wal_buffers_mb":                     16,
+        "checkpoint_timeout_min":              5,
+        "max_wal_size_gb":                     8,
+        "min_wal_size_gb":                     2,
+        "checkpoint_completion_target":      0.9,
+        "random_page_cost":                  1.1,
+        "effective_io_concurrency":          200,
+        "default_statistics_target":         100,
+        "max_connections":                   300,
+        "max_worker_processes":                4,
+        "max_parallel_workers":                4,
+        "max_parallel_workers_per_gather":     2,
+        "max_parallel_maintenance_workers":    2,
+    },
+    "olap": {
+        "shared_buffers_mb":                1024,
+        "work_mem_kb":                     10752,  # pgTune: 10723 kB → nearest step=512
+        "maintenance_work_mem_mb":           512,
+        "effective_cache_size_gb":             3,
+        "huge_pages":                       "off",
+        "wal_buffers_mb":                     16,
+        "checkpoint_timeout_min":              5,
+        "max_wal_size_gb":                    16,
+        "min_wal_size_gb":                     4,
+        "checkpoint_completion_target":      0.9,
+        "random_page_cost":                  4.0,
+        "effective_io_concurrency":          200,
+        "default_statistics_target":         500,
+        "max_connections":                    50,  # pgTune: 40 → nearest step=25
+        "max_worker_processes":                4,
+        "max_parallel_workers":                4,
+        "max_parallel_workers_per_gather":     2,
+        "max_parallel_maintenance_workers":    2,
+    },
 }
 
 

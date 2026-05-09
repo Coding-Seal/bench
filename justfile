@@ -5,8 +5,10 @@ BENCH_CLIENTS  := "20"    # match pinned CPU core count
 BENCH_JOBS     := "20"    # 1:1 thread:connection mapping
 BENCH_SCALE    := "50"    # ~720 MB dataset, prevents trivial RAM-cache hits
 
-TRIALS  := "20"
-SAMPLER := "smac"         # smac | tpe
+TRIALS    := "20"
+SAMPLER   := "smac"        # smac | tpe
+WORKLOAD  := "oltp"        # oltp | olap
+OBJECTIVE := "latency"         # tps  | latency
 
 # ── Infrastructure ────────────────────────────────────────────────────────────
 
@@ -47,8 +49,8 @@ bench duration=BENCH_DURATION clients=BENCH_CLIENTS jobs=BENCH_JOBS:
 # ── Optimizer ─────────────────────────────────────────────────────────────────
 
 # Run the optimizer (default: SMAC, 20 trials, 300 s each)
-optimize trials=TRIALS sampler=SAMPLER duration=BENCH_DURATION:
-    uv run python main.py --trials {{trials}} --sampler {{sampler}} --duration {{duration}}
+optimize trials=TRIALS sampler=SAMPLER duration=BENCH_DURATION workload=WORKLOAD objective=OBJECTIVE:
+    uv run python main.py --trials {{trials}} --sampler {{sampler}} --duration {{duration}} --workload {{workload}} --objective {{objective}}
 
 # Open the Optuna dashboard (TPE runs)
 dashboard:

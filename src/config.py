@@ -24,6 +24,9 @@ RESTART_REQUIRED_PARAMS = {
 }
 
 BENCH_DURATION = int(os.getenv("BENCH_DURATION", "30"))
+BENCH_TRIM     = float(os.getenv("BENCH_TRIM", "0.025"))  # fraction trimmed from each end (0.05 = middle 90%)
+WORKLOAD   = os.getenv("WORKLOAD",   "oltp")  # oltp | olap
+OBJECTIVE  = os.getenv("OBJECTIVE",  "tps")   # tps  | latency
 
 # Optuna storage
 STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", "pg_config_optimization")
