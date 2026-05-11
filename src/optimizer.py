@@ -49,6 +49,10 @@ def _run_trial(pg_params: dict, trial_id: int | str) -> dict:
 
 # ── Objective ─────────────────────────────────────────────────────────────────
 
+def _extract_objective(result: dict) -> float:
+    return result["avg_tps"] if cfg.OBJECTIVE == "tps" else result["latency_avg_ms"]
+
+
 def _objective(trial: optuna.Trial) -> float:
     raw = suggest_from_trial(trial)
     pg_params = config_to_pg(raw)
@@ -57,7 +61,7 @@ def _objective(trial: optuna.Trial) -> float:
         result = _run_trial(pg_params, trial.number)
         trial.set_user_attr("latency_avg_ms",  result["latency_avg_ms"])
         trial.set_user_attr("cache_hit_ratio", result["cache_hit_ratio"])
-        return result["avg_tps"] if cfg.OBJECTIVE == "tps" else result["latency_avg_ms"]
+        return _extract_objective(result)
     except Exception as e:
         logger.warning("Trial %s failed: %s", trial.number, e)
         # TrialPruned causes SMACSampler.after_trial to assert values is not None.
@@ -93,7 +97,7 @@ def _run_baseline(study: optuna.Study) -> None:
     logger.info("Running pgTune baseline (trial 0)")
     try:
         result = _run_trial(pg_params, "pgTune")
-        value = result["avg_tps"] if cfg.OBJECTIVE == "tps" else result["latency_avg_ms"]
+        value = _extract_objective(result)
         study.add_trial(optuna.trial.create_trial(
             params=raw,
             distributions=SEARCH_SPACE,
@@ -139,9 +143,11 @@ def run_optimization(trials: int, sampler: str = "smac") -> None:
     if not study.trials:
         _run_baseline(study)
 
+    n_complete_before = len(study.get_trials(states=[optuna.trial.TrialState.COMPLETE]))
+
     def _stop_when_done(study: optuna.Study, _) -> None:
         n_done = len(study.get_trials(states=[optuna.trial.TrialState.COMPLETE]))
-        if n_done >= trials:
+        if n_done >= n_complete_before + trials:
             study.stop()
 
     try:

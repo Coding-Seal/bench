@@ -25,18 +25,27 @@ def restore_config() -> None:
 
 def apply_config(params: dict) -> bool:
     lines = CONFIG_PATH.read_text().splitlines()
+
+    # Parse current values to detect whether restart-required params actually changed.
+    current = {}
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#'):
+            continue
+        m = re.match(r'([a-z_][a-z0-9_]*)\s*=\s*(.+)', stripped, re.IGNORECASE)
+        if m:
+            current[m.group(1).lower()] = m.group(2).strip()
+
     new_lines = []
     applied_keys = set()
-
     for line in lines:
         stripped = line.strip()
         if not stripped or stripped.startswith('#'):
             new_lines.append(line)
             continue
-
-        match = re.match(r'([a-z_][a-z0-9_]*)\s*=', stripped, re.IGNORECASE)
-        if match:
-            key = match.group(1).lower()
+        m = re.match(r'([a-z_][a-z0-9_]*)\s*=', stripped, re.IGNORECASE)
+        if m:
+            key = m.group(1).lower()
             if key in params:
                 indent = line[:len(line) - len(line.lstrip())]
                 new_lines.append(f"{indent}{key} = {params[key]}")
@@ -49,16 +58,19 @@ def apply_config(params: dict) -> bool:
             new_lines.append(f"{k} = {v}")
 
     CONFIG_PATH.write_text("\n".join(new_lines) + "\n")
-    return bool(set(params.keys()) & RESTART_REQUIRED_PARAMS)
+
+    return any(
+        k in RESTART_REQUIRED_PARAMS and str(params[k]) != current.get(k)
+        for k in params
+    )
 
 
-def wait_for_postgres(timeout: int = 60) -> bool:
+def wait_for_postgres(timeout: int = 60) -> None:
     cmd = ["docker", "compose", "exec", "-T", PG_SERVICE, "pg_isready", "-U", PG_USER]
     start = time.time()
     while time.time() - start < timeout:
-        result = subprocess.run(cmd, capture_output=True)
-        if result.returncode == 0:
-            return True
+        if subprocess.run(cmd, capture_output=True).returncode == 0:
+            return
         time.sleep(2)
     raise RuntimeError(f"PostgreSQL did not become ready within {timeout}s")
 

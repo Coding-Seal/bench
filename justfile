@@ -1,14 +1,14 @@
 set dotenv-load := true
 
-BENCH_DURATION := "30"   # 5 min — smooths transient spikes
+BENCH_DURATION := "120"   # 2 min — smooths transient spikes
 BENCH_CLIENTS  := "20"    # match pinned CPU core count
 BENCH_JOBS     := "20"    # 1:1 thread:connection mapping
 BENCH_SCALE    := "50"    # ~720 MB dataset, prevents trivial RAM-cache hits
 
-TRIALS    := "20"
+TRIALS    := "30"
 SAMPLER   := "smac"        # smac | tpe
 WORKLOAD  := "oltp"        # oltp | olap
-OBJECTIVE := "latency"         # tps  | latency
+OBJECTIVE := "tps"         # tps  | latency
 
 # ── Infrastructure ────────────────────────────────────────────────────────────
 
@@ -48,12 +48,13 @@ bench duration=BENCH_DURATION clients=BENCH_CLIENTS jobs=BENCH_JOBS:
 
 # ── Optimizer ─────────────────────────────────────────────────────────────────
 
-# Run the optimizer (default: SMAC, 20 trials, 300 s each)
+# Run the optimizer (default: SMAC, 20 trials, 1800 s each)
 optimize trials=TRIALS sampler=SAMPLER duration=BENCH_DURATION workload=WORKLOAD objective=OBJECTIVE:
     uv run python main.py --trials {{trials}} --sampler {{sampler}} --duration {{duration}} --workload {{workload}} --objective {{objective}}
 
 # Open the Optuna dashboard (TPE runs)
 dashboard:
+    xdg-open http://127.0.0.1:8080
     uv run optuna-dashboard sqlite:///optuna_study.db
 
 # ── PostgreSQL config ─────────────────────────────────────────────────────────
