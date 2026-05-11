@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
+[ -z "$staged" ] && exit 0
+
+uv run ruff format $staged
+git add $staged
+
+uv run pytest tests/ -q
