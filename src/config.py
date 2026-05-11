@@ -1,6 +1,7 @@
 # src/config.py
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,18 +19,22 @@ PG_SERVICE = "postgres"
 
 # ✅ Parameters that REQUIRE a full PostgreSQL restart
 RESTART_REQUIRED_PARAMS = {
-    "shared_buffers", "max_connections", "huge_pages", "wal_level",
-    "max_worker_processes", "max_parallel_workers", "max_parallel_workers_per_gather",
-    "max_parallel_maintenance_workers"
+    "shared_buffers",
+    "max_connections",
+    "huge_pages",
+    "wal_level",
+    "max_worker_processes",
+    "max_parallel_workers",
+    "max_parallel_workers_per_gather",
+    "max_parallel_maintenance_workers",
 }
 
 BENCH_DURATION = int(os.getenv("BENCH_DURATION", "30"))
-BENCH_TRIM     = float(os.getenv("BENCH_TRIM", "0.025"))  # fraction trimmed from each end (0.05 = middle 90%)
-WORKLOAD   = os.getenv("WORKLOAD",   "oltp")  # oltp | olap
-OBJECTIVE  = os.getenv("OBJECTIVE",  "tps")   # tps  | latency
+BENCH_TRIM = float(os.getenv("BENCH_TRIM", "0.025"))  # fraction trimmed from each end
+WORKLOAD = os.getenv("WORKLOAD", "oltp")  # oltp | olap
+OBJECTIVE = os.getenv("OBJECTIVE", "tps")  # tps  | latency
 
 # Optuna storage
 STUDY_NAME = os.getenv("OPTUNA_STUDY_NAME", "pg_config_optimization")
 STORAGE_DB = PROJECT_ROOT / "optuna_study.db"
 STORAGE_URL = f"sqlite:///{STORAGE_DB.resolve()}"
-

@@ -69,4 +69,13 @@ restart:
 # ── Python env ────────────────────────────────────────────────────────────────
 
 sync:
-    uv sync
+    uv sync --dev
+
+test:
+    uv run pytest tests/ -v
+
+fmt:
+    uv run ruff format src/ tests/ main.py
+
+lint:
+    uv run ruff check src/ tests/ main.py

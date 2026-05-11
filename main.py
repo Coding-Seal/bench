@@ -19,16 +19,32 @@ def _setup_logging() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="PostgreSQL Configuration Optimizer")
-    parser.add_argument("--trials",    type=int, default=20)
-    parser.add_argument("--sampler",   choices=["smac", "tpe"], default="smac")
-    parser.add_argument("--objective", choices=["tps", "latency"], default=None,
-                        help="metric to optimize (overrides OBJECTIVE env var)")
-    parser.add_argument("--duration",  type=int, default=None,
-                        help="pgbench seconds per trial (overrides BENCH_DURATION env var)")
-    parser.add_argument("--workload",  choices=["oltp", "olap"], default=None,
-                        help="benchmark workload (overrides WORKLOAD env var)")
-    parser.add_argument("--continue",  dest="study_name", metavar="STUDY_NAME",
-                        help="resume an existing study by name instead of creating a new one")
+    parser.add_argument("--trials", type=int, default=20)
+    parser.add_argument("--sampler", choices=["smac", "tpe"], default="smac")
+    parser.add_argument(
+        "--objective",
+        choices=["tps", "latency"],
+        default=None,
+        help="metric to optimize (overrides OBJECTIVE env var)",
+    )
+    parser.add_argument(
+        "--duration",
+        type=int,
+        default=None,
+        help="pgbench seconds per trial (overrides BENCH_DURATION env var)",
+    )
+    parser.add_argument(
+        "--workload",
+        choices=["oltp", "olap"],
+        default=None,
+        help="benchmark workload (overrides WORKLOAD env var)",
+    )
+    parser.add_argument(
+        "--continue",
+        dest="study_name",
+        metavar="STUDY_NAME",
+        help="resume an existing study by name instead of creating a new one",
+    )
     args = parser.parse_args()
 
     _setup_logging()

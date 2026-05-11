@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 # ── Shared trial logic ────────────────────────────────────────────────────────
 
+
 def _run_trial(pg_params: dict, trial_id: int | str) -> dict:
     """
     Apply pg_params, benchmark, return metrics dict.
@@ -37,8 +38,12 @@ def _run_trial(pg_params: dict, trial_id: int | str) -> dict:
         duration = end_ts - start_ts
         trim = int(duration * cfg.BENCH_TRIM)
         prom = poll_prometheus_metrics(start_ts + trim, end_ts - trim)
-        logger.info("  TPS=%.2f | Latency=%.2f ms | Cache Hit=%.1f%%",
-                    prom["avg_tps"], prom["latency_avg_ms"], prom["cache_hit_ratio"])
+        logger.info(
+            "  TPS=%.2f | Latency=%.2f ms | Cache Hit=%.1f%%",
+            prom["avg_tps"],
+            prom["latency_avg_ms"],
+            prom["cache_hit_ratio"],
+        )
         return prom
     except BaseException:
         restore_config()
@@ -48,6 +53,7 @@ def _run_trial(pg_params: dict, trial_id: int | str) -> dict:
 
 
 # ── Objective ─────────────────────────────────────────────────────────────────
+
 
 def _extract_objective(result: dict) -> float:
     return result["avg_tps"] if cfg.OBJECTIVE == "tps" else result["latency_avg_ms"]
@@ -59,17 +65,19 @@ def _objective(trial: optuna.Trial) -> float:
     trial.set_user_attr("pg_config", pg_params)
     try:
         result = _run_trial(pg_params, trial.number)
-        trial.set_user_attr("latency_avg_ms",  result["latency_avg_ms"])
+        trial.set_user_attr("latency_avg_ms", result["latency_avg_ms"])
         trial.set_user_attr("cache_hit_ratio", result["cache_hit_ratio"])
         return _extract_objective(result)
     except Exception as e:
         logger.warning("Trial %s failed: %s", trial.number, e)
         # TrialPruned causes SMACSampler.after_trial to assert values is not None.
         # Return a worst-case value so SMAC can still update its model.
-        return 0.0 if trial.study.direction == optuna.study.StudyDirection.MAXIMIZE else float("inf")
+        is_maximize = trial.study.direction == optuna.study.StudyDirection.MAXIMIZE
+        return 0.0 if is_maximize else float("inf")
 
 
 # ── Sampler selection ─────────────────────────────────────────────────────────
+
 
 def _build_sampler(sampler: str) -> optuna.samplers.BaseSampler:
     if sampler == "smac":
@@ -85,6 +93,7 @@ def _build_sampler(sampler: str) -> optuna.samplers.BaseSampler:
 
 # ── pgTune baseline ───────────────────────────────────────────────────────────
 
+
 def _run_baseline(study: optuna.Study) -> None:
     """Run the pgTune baseline and inject the result directly into the study.
 
@@ -98,22 +107,25 @@ def _run_baseline(study: optuna.Study) -> None:
     try:
         result = _run_trial(pg_params, "pgTune")
         value = _extract_objective(result)
-        study.add_trial(optuna.trial.create_trial(
-            params=raw,
-            distributions=SEARCH_SPACE,
-            value=value,
-            user_attrs={
-                "pg_config":       pg_params,
-                "latency_avg_ms":  result["latency_avg_ms"],
-                "cache_hit_ratio": result["cache_hit_ratio"],
-            },
-        ))
+        study.add_trial(
+            optuna.trial.create_trial(
+                params=raw,
+                distributions=SEARCH_SPACE,
+                value=value,
+                user_attrs={
+                    "pg_config": pg_params,
+                    "latency_avg_ms": result["latency_avg_ms"],
+                    "cache_hit_ratio": result["cache_hit_ratio"],
+                },
+            )
+        )
         logger.info("pgTune baseline: %.2f", value)
     except Exception as e:
         logger.warning("pgTune baseline failed: %s — proceeding without it", e)
 
 
 # ── Warmup ────────────────────────────────────────────────────────────────────
+
 
 def _warmup() -> None:
     logger.info("Warmup: running benchmark to prime buffer cache (results discarded)")
@@ -124,10 +136,16 @@ def _warmup() -> None:
 
 # ── Runner ────────────────────────────────────────────────────────────────────
 
+
 def run_optimization(trials: int, sampler: str = "smac") -> None:
     direction = "maximize" if cfg.OBJECTIVE == "tps" else "minimize"
-    logger.info("Starting PostgreSQL Optimization (%s, %s, objective=%s) — %d trials",
-                sampler.upper(), cfg.WORKLOAD.upper(), cfg.OBJECTIVE, trials)
+    logger.info(
+        "Starting PostgreSQL Optimization (%s, %s, objective=%s) — %d trials",
+        sampler.upper(),
+        cfg.WORKLOAD.upper(),
+        cfg.OBJECTIVE,
+        trials,
+    )
     logger.info("Storage: %s | Study: %s", cfg.STORAGE_URL, cfg.STUDY_NAME)
 
     _warmup()

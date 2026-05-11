@@ -8,22 +8,40 @@ logger = logging.getLogger(__name__)
 
 _WORKLOAD_DEFAULTS = {
     "oltp": {"clients": 20, "jobs": 20, "mode": "prepared", "script": None},
-    "olap": {"clients": 4,  "jobs": 4,  "mode": "simple",   "script": "/pgbench_scripts/olap.sql"},
+    "olap": {"clients": 4, "jobs": 4, "mode": "simple", "script": "/pgbench_scripts/olap.sql"},
 }
 
 
 def run_benchmark(duration: int = 300, workload: str = "oltp") -> tuple[int, int]:
     defaults = _WORKLOAD_DEFAULTS[workload]
     clients, jobs, mode, script = (
-        defaults["clients"], defaults["jobs"], defaults["mode"], defaults["script"],
+        defaults["clients"],
+        defaults["jobs"],
+        defaults["mode"],
+        defaults["script"],
     )
     logger.info("pgbench [%s]: %ds | %d clients | %d threads", workload, duration, clients, jobs)
 
     cmd = [
-        "docker", "compose", "run", "--rm", "--no-deps", "pgbench",
+        "docker",
+        "compose",
+        "run",
+        "--rm",
+        "--no-deps",
         "pgbench",
-        "-c", str(clients), "-j", str(jobs), "-T", str(duration),
-        "-M", mode, "-U", PG_USER, "-d", PG_DB,
+        "pgbench",
+        "-c",
+        str(clients),
+        "-j",
+        str(jobs),
+        "-T",
+        str(duration),
+        "-M",
+        mode,
+        "-U",
+        PG_USER,
+        "-d",
+        PG_DB,
     ]
     if script:
         cmd += ["-f", script]

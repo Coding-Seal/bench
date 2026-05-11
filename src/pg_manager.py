@@ -30,9 +30,9 @@ def apply_config(params: dict) -> bool:
     current = {}
     for line in lines:
         stripped = line.strip()
-        if not stripped or stripped.startswith('#'):
+        if not stripped or stripped.startswith("#"):
             continue
-        m = re.match(r'([a-z_][a-z0-9_]*)\s*=\s*(.+)', stripped, re.IGNORECASE)
+        m = re.match(r"([a-z_][a-z0-9_]*)\s*=\s*(.+)", stripped, re.IGNORECASE)
         if m:
             current[m.group(1).lower()] = m.group(2).strip()
 
@@ -40,14 +40,14 @@ def apply_config(params: dict) -> bool:
     applied_keys = set()
     for line in lines:
         stripped = line.strip()
-        if not stripped or stripped.startswith('#'):
+        if not stripped or stripped.startswith("#"):
             new_lines.append(line)
             continue
-        m = re.match(r'([a-z_][a-z0-9_]*)\s*=', stripped, re.IGNORECASE)
+        m = re.match(r"([a-z_][a-z0-9_]*)\s*=", stripped, re.IGNORECASE)
         if m:
             key = m.group(1).lower()
             if key in params:
-                indent = line[:len(line) - len(line.lstrip())]
+                indent = line[: len(line) - len(line.lstrip())]
                 new_lines.append(f"{indent}{key} = {params[key]}")
                 applied_keys.add(key)
                 continue
@@ -59,10 +59,7 @@ def apply_config(params: dict) -> bool:
 
     CONFIG_PATH.write_text("\n".join(new_lines) + "\n")
 
-    return any(
-        k in RESTART_REQUIRED_PARAMS and str(params[k]) != current.get(k)
-        for k in params
-    )
+    return any(k in RESTART_REQUIRED_PARAMS and str(params[k]) != current.get(k) for k in params)
 
 
 def wait_for_postgres(timeout: int = 60) -> None:
@@ -81,9 +78,20 @@ def reload_or_restart(needs_restart: bool) -> None:
         run_docker_cmd(["docker", "compose", "restart", PG_SERVICE])
     else:
         logger.info("Reloading PostgreSQL configuration")
-        run_docker_cmd([
-            "docker", "compose", "exec", "-T", PG_SERVICE,
-            "psql", "-U", PG_USER, "-d", PG_DB,
-            "-c", "SELECT pg_reload_conf();"
-        ])
+        run_docker_cmd(
+            [
+                "docker",
+                "compose",
+                "exec",
+                "-T",
+                PG_SERVICE,
+                "psql",
+                "-U",
+                PG_USER,
+                "-d",
+                PG_DB,
+                "-c",
+                "SELECT pg_reload_conf();",
+            ]
+        )
     wait_for_postgres()
