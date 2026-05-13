@@ -2,3 +2,7 @@
 __pycache__
 optuna_study.db
 smac3_output
+
+# Thesis
+thesis/docs/
+thesis/thesis.pdf

@@ -152,3 +152,35 @@ Study names are auto-generated as `pg_{workload}_{objective}_{sampler}_{timestam
 - Prometheus window is trimmed by `BENCH_TRIM` on each side: `rate()[1m]` lookback at `start_ts` bleeds pre-benchmark traffic into the first minute of data.
 - pgTune baseline is injected via `study.add_trial()` not `enqueue_trial()` — enqueuing creates a trial without SMAC seed info, breaking its intensifier on the next `ask()`.
 - `optimizer.py` imports `src.config` as a module (`from . import config as cfg`) so runtime mutations in `main.py` (`cfg.WORKLOAD = ...`, etc.) are visible when trial functions execute.
+
+## Thesis
+
+Bachelor's VKR at SPbPU (direction 09.03.04), written in Russian, GOST 7.32-2017 format.
+Template: `@preview/modern-g7-32:0.2.0` (Typst). Requires Typst ≥ 0.14.0.
+
+```bash
+just thesis        # compile → thesis/thesis.pdf
+just thesis-watch  # recompile on save
+```
+
+### Structure
+
+```
+thesis/
+├── main.typ                   # entry point — fill in name/supervisor placeholders
+├── references.bib             # bibliography (12 sources)
+└── chapters/
+    ├── abbreviations.typ
+    ├── intro.typ
+    ├── ch1-analysis.typ       # literature review, existing tools
+    ├── ch2-bayesian.typ       # BO theory, TPE, SMAC, search space, metrics
+    ├── ch3-implementation.typ # architecture, config management, trial cycle
+    ├── ch4-experiments.typ    # methodology, results (+10% TPS vs pgTune)
+    └── conclusion.typ
+```
+
+### After compiling
+
+- Fill in `main.typ`: `manager` (supervisor name/position) and `performers` (your name/group).
+- Add an architecture diagram to `thesis/sources/architecture.svg` and uncomment the `#figure` block in `ch3-implementation.typ`.
+- Math uses Typst symbols (`lt.eq`, `gt.eq`, `tilde`, `dot`) — not LaTeX macros.

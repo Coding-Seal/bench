@@ -5,9 +5,9 @@ BENCH_CLIENTS  := "20"    # match pinned CPU core count
 BENCH_JOBS     := "20"    # 1:1 thread:connection mapping
 BENCH_SCALE    := "50"    # ~720 MB dataset, prevents trivial RAM-cache hits
 
-TRIALS    := "30"
+TRIALS    := "60"
 SAMPLER   := "smac"        # smac | tpe
-WORKLOAD  := "oltp"        # oltp | olap
+WORKLOAD  := "olap"        # oltp | olap
 OBJECTIVE := "tps"         # tps  | latency
 
 # ── Infrastructure ────────────────────────────────────────────────────────────
@@ -80,3 +80,11 @@ fmt:
 
 lint:
     uv run ruff check src/ tests/ main.py
+
+# ── Thesis ────────────────────────────────────────────────────────────────────
+
+thesis:
+    typst compile thesis/main.typ thesis/thesis.pdf
+
+thesis-watch:
+    typst watch thesis/main.typ thesis/thesis.pdf
