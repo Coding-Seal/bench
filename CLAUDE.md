@@ -1,5 +1,9 @@
 # PostgreSQL Configuration Optimizer
 
+## Development
+
+Always use `uv run python` (never `python3` directly) to run scripts in this project.
+
 Bayesian optimization of PostgreSQL knobs using Optuna (SMAC / TPE samplers) with pgbench as the workload driver and Prometheus for metric collection.
 
 ## Architecture
