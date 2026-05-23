@@ -4,6 +4,8 @@
   hide-title: true,
 )
 
+#set text(font: "Times New Roman")
+
 #[
   #set page(margin: 0mm)
   #image("sources/TL_Bakalavr_2026.pdf")
