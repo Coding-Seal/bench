@@ -1,0 +1,26 @@
+@startuml
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Verdana
+skinparam activityFontSize 12
+skinparam activityBackgroundColor #f0f4ff
+skinparam activityBorderColor #4466aa
+
+start
+
+:Инициализация: сформировать начальный\nнабор случайных конфигураций;
+
+repeat
+  :Обучить суррогатную модель на накопленных наблюдениях;
+  :Максимизировать функцию приобретения;
+  :Выбрать следующую конфигурацию;
+  :Применить конфигурацию к PostgreSQL;
+  :Запустить нагрузочный тест (pgbench)\nи измерить метрику;
+  :Обновить набор наблюдений;
+repeat while ( Последняя итерация ?) is (да)
+->нет;
+
+:Вернуть лучшую найденную\nконфигурацию;
+
+stop
+@enduml

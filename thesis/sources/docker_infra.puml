@@ -1,0 +1,47 @@
+@startuml
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Verdana
+skinparam nodeFontSize 11
+skinparam packageFontSize 12
+skinparam componentFontSize 10
+
+node "Хост Linux (6 ядер, 16 ГБ ОЗУ)" as host {
+
+  component "Optimizer\n(Python, ядра 0-1)" as optimizer
+
+  package "Docker Compose" #f5f5f5 {
+
+    node "postgres\ncpuset: 2-5\nmem_limit: 4 ГБ\n:5432" as pg_ctr #e8f5e9 {
+      component "PostgreSQL 17" as pg
+      file "performance.conf" as perfconf
+    }
+
+    node "pgbench" as bench_ctr #fff8e1 {
+      component "pgbench" as bench
+    }
+
+    node "postgres-exporter\n:9187" as exp_ctr #fce4ec {
+      component "exporter" as exp
+    }
+
+    node "prometheus\n:9090" as prom_ctr #fce4ec {
+      component "Prometheus" as prom
+    }
+
+    node "grafana\n:3000" as grafana_ctr #e3f2fd {
+      component "Grafana" as grafana
+    }
+  }
+}
+
+optimizer --> perfconf : bind mount (запись)
+optimizer --> prom_ctr : HTTP :9090 (запрос метрик)
+optimizer --> bench_ctr : docker compose run
+
+bench --> pg : TCP :5432 (нагрузка)
+exp --> pg : TCP :5432 (статистика)
+prom --> exp : scrape :9187 (10 с)
+grafana --> prom : PromQL :9090
+
+@enduml

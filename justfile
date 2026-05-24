@@ -83,8 +83,11 @@ lint:
 
 # ── Thesis ────────────────────────────────────────────────────────────────────
 
-thesis:
+thesis: thesis-diagrams
     typst compile thesis/main.typ thesis/thesis.pdf
 
-thesis-watch:
+thesis-watch: thesis-diagrams
     typst watch thesis/main.typ thesis/thesis.pdf
+
+thesis-diagrams:
+    plantuml -tsvg thesis/sources/*.puml
