@@ -160,6 +160,7 @@ Study names are auto-generated as `pg_{workload}_{objective}_{sampler}_{timestam
 ## Thesis
 
 Bachelor's VKR at SPbPU (direction 09.03.04), written in Russian, GOST 7.32-2017 format.
+Topic: «Оптимизация конфигурации PostgreSQL на основе алгоритма SMAC»
 Template: `@preview/modern-g7-32:0.2.0` (Typst). Requires Typst ≥ 0.14.0.
 
 ```bash

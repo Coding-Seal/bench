@@ -15,7 +15,7 @@ Requires Typst ≥ 0.14.0. Binary installed via `cargo install typst-cli`.
 
 ## Thesis metadata
 
-- **Topic:** Байесовская оптимизация конфигурационных параметров PostgreSQL
+- **Topic:** Оптимизация конфигурации PostgreSQL на основе алгоритма SMAC
 - **Type:** Выпускная квалификационная работа бакалавра
 - **University:** СПбПУ Петра Великого, direction 09.03.04
 - **Language:** Russian

@@ -6,6 +6,10 @@
 
 #set text(font: "Times New Roman")
 
+// Страницы без номеров: титул, задание, реферат, abstract, содержание
+#[
+#set page(footer: none)
+
 #[
   #set page(margin: 0mm)
   #image("sources/TL_Bakalavr_2026.pdf")
@@ -34,6 +38,9 @@
   "pgbench",
   "конфигурационные параметры",
 )[
+  Тема выпускной квалификационной работы: «Оптимизация конфигурации PostgreSQL
+  на основе алгоритма SMAC».
+
   Выпускная квалификационная работа посвящена разработке прототипа системы
   автоматической оптимизации конфигурационных параметров СУБД PostgreSQL.
   Предметом исследования являются методы автоматической настройки параметров
@@ -78,6 +85,9 @@
 #set par(first-line-indent: 0pt)
 #upper[PostgreSQL, automated DBMS configuration tuning, Bayesian optimization, SMAC, TPE, pgbench, configuration parameters]
 
+The subject of the graduate qualification work is «PostgreSQL Configuration
+Optimization Based on the SMAC Algorithm».
+
 This thesis presents a prototype system for automated optimization of PostgreSQL
 DBMS configuration parameters using Bayesian optimization. The subject of study
 is automated database tuning methods based on black-box optimization.
@@ -98,6 +108,8 @@ outperforms heuristic methods without expert involvement.
 // ── Оглавление ────────────────────────────────────────────────────────────────
 
 #outline()
+
+] // конец блока без нумерации страниц
 
 // ── Определения, обозначения и сокращения ────────────────────────────────────
 
