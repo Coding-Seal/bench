@@ -91,3 +91,9 @@ thesis-watch: thesis-diagrams
 
 thesis-diagrams:
     plantuml -tsvg thesis/sources/*.puml
+
+slides:
+    typst compile thesis/defense/slides.typ thesis/defense/slides.pdf --root thesis
+
+slides-watch:
+    typst watch thesis/defense/slides.typ thesis/defense/slides.pdf --root thesis
