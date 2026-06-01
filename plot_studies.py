@@ -261,43 +261,36 @@ def plot_gains():
         colors = [BASELINE_COLOR, SMAC_COLOR, TPE_COLOR]
         labels = ["pgTune", "SMAC", "TPE"]
 
-        # Pre-compute y range so annotation positions are stable
-        all_vals = [m - s for m, s in zip(means, stds)] + [m + s for m, s in zip(means, stds)]
-        margin = (max(all_vals) - min(all_vals)) * 0.4
-        ymin = max(0, min(all_vals) - margin)
-        ymax = max(all_vals) + margin
+        span = max(means) - min(means)
+        ymin = max(0, min(means) - span * 0.15)
+        ymax = max(means) + span * 0.15
         ax.set_ylim(ymin, ymax)
 
         offsets = np.array([-bar_width, 0.0, bar_width])
-        for offset, mean, std, color, label in zip(offsets, means, stds, colors, labels):
+        tick_labels = []
+        for offset, mean, color, label in zip(offsets, means, colors, labels):
             ax.bar(
                 x + offset,
                 mean,
                 bar_width * 0.9,
                 color=color,
                 label=label,
-                yerr=std,
-                capsize=5,
-                error_kw={"elinewidth": 1.5, "ecolor": "black"},
             )
-            if label != "pgTune":
+            if label == "pgTune":
+                tick_labels.append(label)
+            else:
                 gain = _pct_gain(mean, g["baseline_mean"], direction)
                 sign = "+" if gain >= 0 else ""
-                ax.text(
-                    x[0] + offset,
-                    mean + std + (ymax - ymin) * 0.015,
-                    f"{sign}{gain:.1f}%",
-                    ha="center",
-                    va="bottom",
-                    fontsize=10,
-                    fontweight="bold",
-                    color=color,
-                )
+                tick_labels.append(f"{label}\n{sign}{gain:.1f}%")
 
-        ax.set_title(cfg["title"], fontsize=13, fontweight="bold")
+        ax.set_title(cfg["title"], fontsize=14, fontweight="bold")
         ax.set_ylabel(f"Лучший {cfg['ylabel']}")
-        ax.set_xticks([])
-        ax.legend(fontsize=9.5, framealpha=0.9)
+        ax.set_xticks([x[0] + o for o in offsets])
+        ax.set_xticklabels(tick_labels, fontsize=12)
+        for tick, color in zip(ax.get_xticklabels(), colors):
+            tick.set_color(color)
+            tick.set_fontweight("bold")
+        # ax.legend(fontsize=9.5, framealpha=0.9)
 
     fig.tight_layout()
     out = PLOTS_DIR / "gains_barchart.svg"
