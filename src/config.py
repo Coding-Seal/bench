@@ -17,7 +17,7 @@ PG_DB = os.getenv("POSTGRES_DB", "postgres")
 PG_USER = os.getenv("POSTGRES_USER", "postgres")
 PG_SERVICE = "postgres"
 
-# ✅ Parameters that REQUIRE a full PostgreSQL restart
+# Parameters that REQUIRE a full PostgreSQL restart
 RESTART_REQUIRED_PARAMS = {
     "shared_buffers",
     "max_connections",
